@@ -39,83 +39,73 @@ def resolve_csv_path(file_path: PathInput) -> Path:
 
 
 def normalize_class_name(file_path: Path) -> str:
-    parts = [
-        part
-        for part in re.split(r'\W+', file_path.stem)
-        if part
-    ]
-    class_name = ''.join(part[:1].upper() + part[1:] for part in parts)
+    parts = [part for part in re.split(r"\W+", file_path.stem) if part]
+    class_name = "".join(part[:1].upper() + part[1:] for part in parts)
 
     if not class_name:
-        class_name = 'CsvRow'
+        class_name = "CsvRow"
     if class_name[0].isdigit():
-        class_name = f'Csv{class_name}'
+        class_name = f"Csv{class_name}"
     if keyword.iskeyword(class_name):
-        class_name = f'{class_name}Row'
+        class_name = f"{class_name}Row"
 
     return class_name
 
 
 def normalize_field_name(name: Optional[str], used_names: Dict[str, int]) -> str:
     if name is None:
-        field_name = f'field_{uuid.uuid4().hex}'
+        field_name = f"field_{uuid.uuid4().hex}"
     else:
         field_name = str(name).strip()
 
-    field_name = re.sub(r'\W+', '_', field_name)
-    field_name = field_name.strip('_')
+    field_name = re.sub(r"\W+", "_", field_name)
+    field_name = field_name.strip("_")
 
     if not field_name:
-        field_name = 'field'
+        field_name = "field"
     if field_name[0].isdigit():
-        field_name = f'field_{field_name}'
+        field_name = f"field_{field_name}"
     if keyword.iskeyword(field_name):
-        field_name = f'{field_name}_'
+        field_name = f"{field_name}_"
 
     count = used_names.get(field_name, 0)
     used_names[field_name] = count + 1
 
     if count:
-        return f'{field_name}_{count + 1}'
+        return f"{field_name}_{count + 1}"
     return field_name
 
 
 def build_field_map(headers: List[Optional[str]]) -> Dict[str, Optional[str]]:
     used_names: Dict[str, int] = {}
-    return {
-        normalize_field_name(header, used_names): header
-        for header in headers
-    }
+    return {normalize_field_name(header, used_names): header for header in headers}
 
 
 def convert_rows_to_dataclasses(
-        table: CsvTable,
-        headers: List[Optional[str]],
-        class_name: str = 'CsvRow') -> DataclassTable:
+    table: CsvTable, headers: List[Optional[str]], class_name: str = "CsvRow"
+) -> DataclassTable:
     field_map = build_field_map(headers)
     row_class = make_dataclass(
         class_name,
         [(field_name, CsvValue) for field_name in field_map],
-        namespace={'__csv_field_map__': field_map}
+        namespace={"__csv_field_map__": field_map},
     )
 
     return [
-        row_class(**{
-            field_name: row.get(header)
-            for field_name, header in field_map.items()
-        })
+        row_class(
+            **{field_name: row.get(header) for field_name, header in field_map.items()}
+        )
         for row in table
     ]
 
 
 def load_csv(
-        file_path: PathInput,
-        encoding: str = 'utf-8-sig',
-        as_dataclass: bool = True) -> LoadResult:
+    file_path: PathInput, encoding: str = "utf-8-sig", as_dataclass: bool = True
+) -> LoadResult:
     file_path = resolve_csv_path(file_path)
 
     if not file_path.exists():
-        raise Exception(f'{file_path} not found')
+        raise Exception(f"{file_path} not found")
 
     with file_path.open(encoding=encoding) as fd:
         reader = csv.DictReader(fd)
@@ -124,9 +114,7 @@ def load_csv(
 
     if as_dataclass:
         return convert_rows_to_dataclasses(
-            table,
-            headers,
-            class_name=normalize_class_name(file_path)
+            table, headers, class_name=normalize_class_name(file_path)
         )
 
     return table

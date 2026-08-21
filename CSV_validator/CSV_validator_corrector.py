@@ -46,16 +46,25 @@ class ValidationResult:
 def detect_encoding(raw: bytes) -> tuple[str, List[Issue]]:
     issues: List[Issue] = []
     if raw.startswith(b"\xff\xfe") or raw.startswith(b"\xfe\xff"):
-        issues.append(Issue("warning", "UTF-16 BOM detected; some CSV tools expect UTF-8."))
+        issues.append(
+            Issue("warning", "UTF-16 BOM detected; some CSV tools expect UTF-8.")
+        )
         return "utf-16", issues
     if raw.startswith(b"\xef\xbb\xbf"):
-        issues.append(Issue("warning", "UTF-8 BOM detected; first header may be misread by weak parsers."))
+        issues.append(
+            Issue(
+                "warning",
+                "UTF-8 BOM detected; first header may be misread by weak parsers.",
+            )
+        )
         return "utf-8-sig", issues
     try:
         raw.decode("utf-8")
         return "utf-8", issues
     except UnicodeDecodeError:
-        issues.append(Issue("warning", "File is not valid UTF-8; decoding as Latin-1 fallback."))
+        issues.append(
+            Issue("warning", "File is not valid UTF-8; decoding as Latin-1 fallback.")
+        )
         return "latin-1", issues
 
 
@@ -70,19 +79,39 @@ def detect_newline_issues(raw: bytes) -> List[Issue]:
     elif has_crlf and raw.replace(b"\r\n", b"").find(b"\n") != -1:
         issues.append(Issue("warning", "Mixed CRLF and LF newline styles detected."))
     elif has_cr and not has_crlf:
-        issues.append(Issue("warning", "CR-only line endings detected; many tools expect LF or CRLF."))
+        issues.append(
+            Issue(
+                "warning",
+                "CR-only line endings detected; many tools expect LF or CRLF.",
+            )
+        )
 
     if b"\r" in raw:
-        issues.append(Issue("info", "Carriage return characters are present; some tools may show these as ^M."))
+        issues.append(
+            Issue(
+                "info",
+                "Carriage return characters are present; some tools may show these as ^M.",
+            )
+        )
 
     if raw and not raw.endswith((b"\n", b"\r")):
-        issues.append(Issue("info", "File does not end with a newline; most parsers accept this, but partial exports may look similar."))
+        issues.append(
+            Issue(
+                "info",
+                "File does not end with a newline; most parsers accept this, but partial exports may look similar.",
+            )
+        )
 
     if raw.endswith(b"\n\n") or raw.endswith(b"\r\n\r\n"):
         issues.append(Issue("info", "Trailing blank line detected."))
 
     if not has_lf and not has_cr:
-        issues.append(Issue("warning", "No line terminators detected; file may be a single row or malformed export."))
+        issues.append(
+            Issue(
+                "warning",
+                "No line terminators detected; file may be a single row or malformed export.",
+            )
+        )
 
     return issues
 
@@ -114,7 +143,12 @@ def choose_delimiter(sample: str) -> tuple[str, List[Issue]]:
     best = max(counts, key=counts.get)
 
     if counts[best] == 0:
-        issues.append(Issue("warning", "Could not confidently detect a delimiter; defaulting to comma."))
+        issues.append(
+            Issue(
+                "warning",
+                "Could not confidently detect a delimiter; defaulting to comma.",
+            )
+        )
         return ",", issues
 
     non_zero = [delimiter for delimiter, count in counts.items() if count > 0]
@@ -137,7 +171,9 @@ def sniff_quote_balance(text: str) -> List[Issue]:
             odd_quote_lines.append(idx)
     if odd_quote_lines:
         preview = ", ".join(str(i) for i in odd_quote_lines[:5])
-        issues.append(Issue("warning", f"Lines with odd double-quote counts detected: {preview}."))
+        issues.append(
+            Issue("warning", f"Lines with odd double-quote counts detected: {preview}.")
+        )
     return issues
 
 
@@ -167,10 +203,17 @@ def validate_rows(rows: List[List[str]]) -> List[Issue]:
         if name == "":
             issues.append(Issue("warning", f"Header column {idx} is empty."))
         if name != name.strip():
-            issues.append(Issue("warning", f"Header column {idx} has leading or trailing whitespace."))
+            issues.append(
+                Issue(
+                    "warning",
+                    f"Header column {idx} has leading or trailing whitespace.",
+                )
+            )
         lowered = name.strip().lower()
         if lowered in seen_headers and lowered:
-            issues.append(Issue("warning", f"Duplicate header name detected: {name!r}."))
+            issues.append(
+                Issue("warning", f"Duplicate header name detected: {name!r}.")
+            )
         seen_headers.add(lowered)
         normalized_header.append(name.strip())
 
@@ -221,12 +264,16 @@ def validate_rows(rows: List[List[str]]) -> List[Issue]:
                 )
 
     if len(rows) == 1:
-        issues.append(Issue("warning", "Only one row detected; file may contain header only."))
+        issues.append(
+            Issue("warning", "Only one row detected; file may contain header only.")
+        )
 
     return issues
 
 
-def compare_with_expected_format(result: ValidationResult, config: OutputFormatConfig) -> List[Issue]:
+def compare_with_expected_format(
+    result: ValidationResult, config: OutputFormatConfig
+) -> List[Issue]:
     issues: List[Issue] = []
 
     if result.delimiter != config.delimiter:
@@ -242,7 +289,11 @@ def compare_with_expected_format(result: ValidationResult, config: OutputFormatC
         "\r\n": "crlf",
         "\r": "cr",
     }.get(config.line_terminator)
-    if expected_newline_style and result.newline_style not in {"mixed", "none", expected_newline_style}:
+    if expected_newline_style and result.newline_style not in {
+        "mixed",
+        "none",
+        expected_newline_style,
+    }:
         issues.append(
             Issue(
                 "warning",
@@ -250,7 +301,9 @@ def compare_with_expected_format(result: ValidationResult, config: OutputFormatC
             )
         )
 
-    expected_encoding = "utf-8-sig" if config.bom and config.encoding == "utf-8" else config.encoding
+    expected_encoding = (
+        "utf-8-sig" if config.bom and config.encoding == "utf-8" else config.encoding
+    )
     if result.encoding != expected_encoding:
         issues.append(
             Issue(
@@ -264,7 +317,9 @@ def compare_with_expected_format(result: ValidationResult, config: OutputFormatC
 
 def load_config(path: Path) -> OutputFormatConfig:
     if yaml is None:
-        raise RuntimeError("PyYAML is required for --config support. Install it with: pip install pyyaml")
+        raise RuntimeError(
+            "PyYAML is required for --config support. Install it with: pip install pyyaml"
+        )
 
     if not path.exists():
         raise FileNotFoundError(f"Config file not found: {path}")
@@ -274,23 +329,33 @@ def load_config(path: Path) -> OutputFormatConfig:
 
     delimiter = output_format.get("delimiter", ",")
     if delimiter not in {",", ";", "\t", "|"}:
-        raise ValueError("expected_output_format.delimiter must be one of ',', ';', '\\t', '|'.")
+        raise ValueError(
+            "expected_output_format.delimiter must be one of ',', ';', '\\t', '|'."
+        )
 
     line_terminator = output_format.get("line_terminator", "\n")
     if line_terminator not in {"\n", "\r\n", "\r"}:
-        raise ValueError("expected_output_format.line_terminator must be one of '\\n', '\\r\\n', '\\r'.")
+        raise ValueError(
+            "expected_output_format.line_terminator must be one of '\\n', '\\r\\n', '\\r'."
+        )
 
     quote_style = output_format.get("quote_style", "minimal")
     if quote_style not in {"minimal", "all"}:
-        raise ValueError("expected_output_format.quote_style must be 'minimal' or 'all'.")
+        raise ValueError(
+            "expected_output_format.quote_style must be 'minimal' or 'all'."
+        )
 
     encoding = output_format.get("encoding", "utf-8")
     if encoding not in {"utf-8", "latin-1", "utf-16"}:
-        raise ValueError("expected_output_format.encoding must be 'utf-8', 'latin-1', or 'utf-16'.")
+        raise ValueError(
+            "expected_output_format.encoding must be 'utf-8', 'latin-1', or 'utf-16'."
+        )
 
     bom = bool(output_format.get("bom", False))
     if bom and encoding != "utf-8":
-        raise ValueError("expected_output_format.bom is only supported with utf-8 output.")
+        raise ValueError(
+            "expected_output_format.bom is only supported with utf-8 output."
+        )
 
     return OutputFormatConfig(
         delimiter=delimiter,
@@ -301,9 +366,13 @@ def load_config(path: Path) -> OutputFormatConfig:
     )
 
 
-def write_corrected_csv(rows: List[List[str]], output_path: Path, config: OutputFormatConfig) -> None:
+def write_corrected_csv(
+    rows: List[List[str]], output_path: Path, config: OutputFormatConfig
+) -> None:
     quoting = csv.QUOTE_ALL if config.quote_style == "all" else csv.QUOTE_MINIMAL
-    output_encoding = "utf-8-sig" if config.bom and config.encoding == "utf-8" else config.encoding
+    output_encoding = (
+        "utf-8-sig" if config.bom and config.encoding == "utf-8" else config.encoding
+    )
     with output_path.open("w", encoding=output_encoding, newline="") as handle:
         writer = csv.writer(
             handle,
@@ -314,7 +383,12 @@ def write_corrected_csv(rows: List[List[str]], output_path: Path, config: Output
         writer.writerows(rows)
 
 
-def print_report(path: Path, issues: List[Issue], delimiter: str, config: OutputFormatConfig | None = None) -> int:
+def print_report(
+    path: Path,
+    issues: List[Issue],
+    delimiter: str,
+    config: OutputFormatConfig | None = None,
+) -> int:
     print(f"File: {path}")
     print(f"Detected delimiter: {repr(delimiter)}")
     if config is not None:
@@ -330,7 +404,9 @@ def print_report(path: Path, issues: List[Issue], delimiter: str, config: Output
         return 0
 
     severity_rank = {"error": 0, "warning": 1, "info": 2}
-    sorted_issues = sorted(issues, key=lambda issue: (severity_rank.get(issue.severity, 9), issue.message))
+    sorted_issues = sorted(
+        issues, key=lambda issue: (severity_rank.get(issue.severity, 9), issue.message)
+    )
 
     print("Issues:")
     for issue in sorted_issues:
@@ -340,7 +416,9 @@ def print_report(path: Path, issues: List[Issue], delimiter: str, config: Output
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate a CSV file and optionally rewrite it into a configured output format.")
+    parser = argparse.ArgumentParser(
+        description="Validate a CSV file and optionally rewrite it into a configured output format."
+    )
     parser.add_argument("csv_file", help="Path to the CSV file to validate.")
     parser.add_argument(
         "--config",
@@ -399,10 +477,16 @@ def main() -> int:
 
     if args.write_corrected:
         if config is None:
-            print("A valid --config file is required when using --write-corrected.", file=sys.stderr)
+            print(
+                "A valid --config file is required when using --write-corrected.",
+                file=sys.stderr,
+            )
             return 2
         if any(issue.severity == "error" for issue in issues):
-            print("Cannot write corrected CSV because parsing errors are present.", file=sys.stderr)
+            print(
+                "Cannot write corrected CSV because parsing errors are present.",
+                file=sys.stderr,
+            )
             return 2
         write_corrected_csv(rows, Path(args.write_corrected), config)
 

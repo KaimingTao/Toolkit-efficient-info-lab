@@ -45,10 +45,7 @@ def row_to_dict(row: TableRow) -> CsvRow:
 
 
 def normalize_table(table: Iterable[TableRow]) -> CsvTable:
-    return [
-        row_to_dict(row)
-        for row in table
-    ]
+    return [row_to_dict(row) for row in table]
 
 
 def infer_header(table: CsvTable) -> List[str]:
@@ -63,20 +60,21 @@ def infer_header(table: CsvTable) -> List[str]:
 
 
 def dump_csv(
-        file_path: PathInput,
-        table: Iterable[TableRow],
-        header: Optional[Sequence[str]] = None,
-        encoding: str = 'utf-8-sig') -> None:
+    file_path: PathInput,
+    table: Iterable[TableRow],
+    header: Optional[Sequence[str]] = None,
+    encoding: str = "utf-8-sig",
+) -> None:
     file_path = resolve_csv_path(file_path)
     file_path.parent.mkdir(exist_ok=True, parents=True)
 
     rows = normalize_table(table)
     if not rows:
-        warnings.warn(f'{file_path} table is empty.')
+        warnings.warn(f"{file_path} table is empty.")
 
     fieldnames = list(header) if header is not None else infer_header(rows)
 
-    with file_path.open('w', encoding=encoding, newline='') as fd:
+    with file_path.open("w", encoding=encoding, newline="") as fd:
         writer = csv.DictWriter(fd, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)

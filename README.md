@@ -33,3 +33,14 @@
 - Preserve inferred header order by first occurrence while scanning rows.
 - Write CSV records with `csv.DictWriter` using UTF-8 with BOM support.
 - Always write the CSV header row before data rows.
+
+## Python code quality
+
+Install Ruff as a development dependency, format the Python files, then apply
+Ruff's automatic lint fixes:
+
+```sh
+uv add --dev ruff
+uv run ruff format .
+uv run ruff check . --fix
+```
