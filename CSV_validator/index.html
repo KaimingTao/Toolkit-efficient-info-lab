@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV Format Corrector</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <p class="eyebrow">Static Web App</p>
+      <h1>CSV format correction with form-controlled output.</h1>
+      <p class="hero-copy">
+        Drop in a CSV, set the target format in the app, inspect compatibility issues, and export a corrected file.
+        Everything runs in the browser.
+      </p>
+    </header>
+
+    <main class="layout">
+      <section class="panel panel-inputs">
+        <div class="panel-header">
+          <h2>Inputs</h2>
+          <p>Provide a CSV and choose the expected output format.</p>
+        </div>
+
+        <div class="upload-grid">
+          <label class="file-card">
+            <span class="file-card-title">CSV file</span>
+            <span class="file-card-copy">Choose a source file to validate and rewrite.</span>
+            <input id="csvFileInput" type="file" accept=".csv,text/csv">
+          </label>
+        </div>
+
+        <div class="editor-block config-block">
+          <div class="editor-label-row">
+            <label for="delimiterSelect">Expected output format</label>
+            <button id="resetConfigButton" class="ghost-button" type="button">Reset defaults</button>
+          </div>
+          <div class="config-grid">
+            <label class="form-field">
+              <span>Delimiter</span>
+              <select id="delimiterSelect">
+                <option value=",">Comma (,)</option>
+                <option value=";">Semicolon (;)</option>
+                <option value="	">Tab (\t)</option>
+                <option value="|">Pipe (|)</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Line terminator</span>
+              <select id="lineTerminatorSelect">
+                <option value="\n">LF (\n)</option>
+                <option value="\r\n">CRLF (\r\n)</option>
+                <option value="\r">CR (\r)</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Encoding</span>
+              <select id="encodingSelect">
+                <option value="utf-8">UTF-8</option>
+                <option value="latin-1">Latin-1</option>
+                <option value="utf-16">UTF-16</option>
+              </select>
+            </label>
+
+            <label class="form-field">
+              <span>Quote style</span>
+              <select id="quoteStyleSelect">
+                <option value="minimal">Minimal</option>
+                <option value="all">All fields</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="toggle-field" for="bomCheckbox">
+            <input id="bomCheckbox" type="checkbox">
+            <span>Include UTF-8 BOM</span>
+          </label>
+          <p class="config-hint">BOM is only available for UTF-8 output.</p>
+        </div>
+
+        <div class="action-row">
+          <button id="analyzeButton" class="primary-button" type="button">Analyze CSV</button>
+          <button id="downloadButton" class="secondary-button" type="button" disabled>Download corrected CSV</button>
+        </div>
+      </section>
+
+      <section class="panel panel-results">
+        <div class="panel-header">
+          <h2>Results</h2>
+          <p>Validation output updates after each analysis run.</p>
+        </div>
+
+        <div class="status-strip" id="statusStrip">
+          <div>
+            <span class="status-label">CSV file</span>
+            <strong id="csvFileName">None selected</strong>
+          </div>
+          <div>
+            <span class="status-label">Detected format</span>
+            <strong id="detectedFormat">Waiting for analysis</strong>
+          </div>
+          <div>
+            <span class="status-label">Target format</span>
+            <strong id="targetFormat">From form settings</strong>
+          </div>
+        </div>
+
+        <div class="metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Rows</span>
+            <strong id="rowCount">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Columns</span>
+            <strong id="columnCount">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Issues</span>
+            <strong id="issueCount">0</strong>
+          </article>
+        </div>
+
+        <div class="results-grid">
+          <section class="result-card">
+            <div class="result-card-header">
+              <h3>Issue report</h3>
+            </div>
+            <ul id="issuesList" class="issues-list"></ul>
+          </section>
+
+          <section class="result-card">
+            <div class="result-card-header">
+              <h3>Corrected preview</h3>
+            </div>
+            <pre id="outputPreview" class="code-preview">Run an analysis to generate a corrected preview.</pre>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

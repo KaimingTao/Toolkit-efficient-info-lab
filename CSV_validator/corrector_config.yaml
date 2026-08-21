@@ -1,0 +1,6 @@
+expected_output_format:
+  delimiter: ","
+  line_terminator: "\n"
+  encoding: "utf-8"
+  quote_style: "minimal"
+  bom: false

@@ -1,0 +1,6 @@
+id,name,zip_code,notes
+00123,Alice,02139,"normal row"
+12345678901234567,Bob,10001,=SUM(A1:A2)
+789, Charlie,90001,"leading space in value"
+42,Dana,"broken quote
+55,Eve,30301,extra,column
