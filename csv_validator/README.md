@@ -6,13 +6,14 @@ CSV files look simple, but different tools export and import them differently. A
 
 The repository includes `CSV_validator_corrector.py`, which can validate a CSV file and optionally rewrite it into a configured output format.
 
-It also includes a static browser app:
+The static browser app is in the sibling `../csv_validator_web/` folder:
 
 - `index.html`
 - `styles.css`
 - `app.js`
 
-Open `index.html` in a browser, load a CSV file, and choose the target format from the built-in form controls. The app will:
+Open `../csv_validator_web/index.html` in a browser, load a CSV file, and
+choose the target format from the built-in form controls. The app will:
 
 - detect delimiter, newline style, and encoding
 - validate the CSV structure and common compatibility risks
