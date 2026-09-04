@@ -41,3 +41,12 @@ and linter for JavaScript or other languages.
 Dependencies must be clearly documented in the workflow step's same-named
 workflow document. When a step does not declare its own dependencies, it uses
 the dependencies declared by its parent step.
+
+## Safety
+
+Code must be reviewed and monitored for security risks. Before committing,
+check that inputs are validated, sensitive data is not exposed, dependencies
+are appropriate, and the workflow does not introduce unsafe file, network, or
+command execution behavior. Each workflow folder must include a `Security.md`
+file that records its security concerns, risk mitigations, and any remaining
+risks. If no concerns are identified, the file must explicitly say so.
