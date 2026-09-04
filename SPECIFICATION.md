@@ -1,24 +1,36 @@
 # Required structure for a workflow step
 
 A **step** is an independently runnable script, command, or subproject task.
-Each step must provide the following six pieces of information.
+Each step must contain these four parts.
 
-1. **Script and header.** The implementation must begin with a concise header
-   (module docstring for Python, crate/module documentation for Rust, or a
-   leading comment for JavaScript) that states its purpose, inputs, outputs,
-   and important side effects.
-2. **What it does.** Its README or a dedicated `SPEC.md` must describe the
-   problem it solves, expected behavior, and constraints. Small utilities may
-   use the header as the short description, provided the repository map links
-   to it.
-3. **How to use it.** Document a copyable command, required dependencies,
-   arguments, input format, output format, and at least one minimal example.
-4. **Substeps.** Describe the ordered internal stages, including validation,
-   transformation, I/O, error handling, and cleanup where applicable.
-5. **Standards.** State the behavioral guarantees and failure cases. Follow
-   the CSV rules in `csv-files/README.md` for CSV utilities; use UTF-8,
-   `pathlib.Path`-compatible paths, explicit exceptions, and no hard-coded
-   machine-specific absolute paths.
-6. **Code formatting.** Python must be formatted and linted by Ruff. Rust
-   must pass `cargo fmt --check` and `cargo clippy -- -D warnings`. Web assets
-   must use consistent two-space indentation and avoid unused code.
+1. **Main workflow entry.** Provide one clearly identified executable entry
+   point: for example, a script, CLI command, application page, or `main`
+   function. The workflow document must name this entry and the command used
+   to run it.
+2. **Workflow document.** Provide a Markdown document beside the entry point
+   with the same base name as the entry file. For example, `load_csv.py` must
+   use `load_csv.md`; `main.rs` must use `main.md`. It must state:
+   - what the workflow does and its expected result;
+   - how to use it, including dependencies, inputs, outputs, and a copyable
+     example command; and
+   - its main substeps in execution order, including validation,
+     transformation, I/O, and error handling where applicable.
+3. **Source-file headers.** Every programming-language source file must begin
+   with a short header: a module docstring in Python, documentation comment in
+   Rust, or leading comment in JavaScript and other languages. The header must
+   be a concise copy of the relevant workflow document: identify the workflow,
+   say what this file does within it, show or point to the usage, and summarize
+   the file's main substeps. Update the header whenever the workflow document
+   changes.
+4. **Dedicated workflow folder and tests.** Place every workflow step in its
+   own folder. That folder must contain the entry file, its same-named workflow
+   document, the implementation files, test code, and test cases (fixtures or
+   sample inputs and their expected outputs). Keep tests and test cases within
+   the workflow folder rather than in a shared unrelated location.
+
+## Formatting and linting
+
+Every programming-language source file must be formatted and linted with the
+project's language-appropriate tools before it is committed. For example, use
+Ruff for Python, `cargo fmt` and Clippy for Rust, and the configured formatter
+and linter for JavaScript or other languages.

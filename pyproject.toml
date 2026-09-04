@@ -1,7 +1,7 @@
 [project]
-name = "csv-file"
+name = "efficient-info-lab"
 version = "0.1.0"
-description = "Add your description here"
+description = "CSV utilities and workflow examples for efficient information handling"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
