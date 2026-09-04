@@ -61,6 +61,12 @@ Supported `expected_output_format` values:
 
 `--config` requires `PyYAML` to be installed.
 
+## Dependencies
+
+The validator uses the Python standard library. Install `PyYAML` only when
+using the `--config` option to load a YAML target-format configuration. It
+inherits the parent project's Python version requirement from `pyproject.toml`.
+
 This document lists the main classes of CSV problems commonly caused by different loaders, dumpers, spreadsheets, databases, ETL tools, scripting libraries, and regional settings.
 
 ## 1. Delimiter Differences

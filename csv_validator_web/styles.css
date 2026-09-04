@@ -1,3 +1,7 @@
+/* CSV validator web workflow styles. Purpose: present the local CSV validation
+   interface. Usage: open index.html; see index.md. Substeps: style file input,
+   validation results, and corrected-download controls. */
+
 :root {
   --bg: #f4efe5;
   --bg-accent: #e7dcc8;
@@ -25,8 +29,16 @@ body {
   font-family: "Avenir Next", "Trebuchet MS", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at top left, rgba(13, 110, 110, 0.14), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(200, 93, 52, 0.18), transparent 28%),
+    radial-gradient(
+      circle at top left,
+      rgba(13, 110, 110, 0.14),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(200, 93, 52, 0.18),
+      transparent 28%
+    ),
     linear-gradient(180deg, var(--bg) 0%, #f8f2e8 100%);
 }
 
@@ -215,7 +227,11 @@ select {
 
 .code-preview {
   min-height: 260px;
-  font: 0.92rem/1.6 "SFMono-Regular", "Menlo", "Monaco", monospace;
+  font:
+    0.92rem/1.6 "SFMono-Regular",
+    "Menlo",
+    "Monaco",
+    monospace;
 }
 
 .action-row {
@@ -231,7 +247,10 @@ button {
   border-radius: 999px;
   font: inherit;
   cursor: pointer;
-  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease;
 }
 
 button:hover {

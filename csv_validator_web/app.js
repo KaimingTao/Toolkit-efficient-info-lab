@@ -1,3 +1,10 @@
+/* CSV validator web workflow.
+ * Purpose: validate a locally selected CSV and prepare corrected output.
+ * Usage: open index.html in a browser; see index.md for details.
+ * Substeps: read the file, detect and validate CSV details, then display or
+ * download corrected output.
+ */
+
 const DEFAULT_CONFIG = {
   delimiter: ",",
   lineTerminator: "\n",
@@ -73,7 +80,11 @@ elements.analyzeButton.addEventListener("click", () => {
     return;
   }
 
-  const analysis = analyzeCsv(state.csvText, configResult.config, state.detectedEncoding ?? "utf-8");
+  const analysis = analyzeCsv(
+    state.csvText,
+    configResult.config,
+    state.detectedEncoding ?? "utf-8",
+  );
   state.analysis = analysis;
   state.correctedCsv = buildCsv(analysis.rows, configResult.config);
   renderAnalysis(analysis, configResult.config);
@@ -96,7 +107,9 @@ elements.downloadButton.addEventListener("click", () => {
   const link = document.createElement("a");
   link.href = url;
 
-  const baseName = state.csvFileName ? state.csvFileName.replace(/\.csv$/i, "") : "corrected";
+  const baseName = state.csvFileName
+    ? state.csvFileName.replace(/\.csv$/i, "")
+    : "corrected";
   link.download = `${baseName}.corrected.csv`;
   link.click();
   URL.revokeObjectURL(url);
@@ -128,7 +141,9 @@ function readConfigFromForm() {
     return { error: "Quote style must be minimal or all." };
   }
   if (config.bom && config.encoding !== "utf-8") {
-    return { error: "UTF-8 BOM output is only supported when encoding is utf-8." };
+    return {
+      error: "UTF-8 BOM output is only supported when encoding is utf-8.",
+    };
   }
 
   return { config };
@@ -155,7 +170,12 @@ function analyzeCsv(csvText, config, detectedEncoding) {
   const newlineStyle = detectNewlineStyle(csvText);
   issues.push(...detectNewlineIssues(csvText));
 
-  const [delimiter, delimiterIssues] = chooseDelimiter(csvText.split(/\r\n|\n|\r/).slice(0, 10).join("\n"));
+  const [delimiter, delimiterIssues] = chooseDelimiter(
+    csvText
+      .split(/\r\n|\n|\r/)
+      .slice(0, 10)
+      .join("\n"),
+  );
   issues.push(...delimiterIssues);
   issues.push(...sniffQuoteBalance(csvText));
 
@@ -164,10 +184,16 @@ function analyzeCsv(csvText, config, detectedEncoding) {
 
   const rows = parseResult.rows;
   issues.push(...validateRows(rows));
-  issues.push(...compareWithExpectedFormat({ delimiter, newlineStyle, encoding: detectedEncoding }, config));
+  issues.push(
+    ...compareWithExpectedFormat(
+      { delimiter, newlineStyle, encoding: detectedEncoding },
+      config,
+    ),
+  );
 
   issues.sort((a, b) => {
-    const rank = (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9);
+    const rank =
+      (SEVERITY_RANK[a.severity] ?? 9) - (SEVERITY_RANK[b.severity] ?? 9);
     return rank !== 0 ? rank : a.message.localeCompare(b.message);
   });
 
@@ -215,20 +241,40 @@ function detectNewlineIssues(text) {
   } else if (hasCrlf && hasLf) {
     issues.push(issue("warning", "Mixed CRLF and LF newline styles detected."));
   } else if (hasCr && !hasCrlf) {
-    issues.push(issue("warning", "CR-only line endings detected; many tools expect LF or CRLF."));
+    issues.push(
+      issue(
+        "warning",
+        "CR-only line endings detected; many tools expect LF or CRLF.",
+      ),
+    );
   }
 
   if (/\r/.test(text)) {
-    issues.push(issue("info", "Carriage return characters are present; some tools may show these as ^M."));
+    issues.push(
+      issue(
+        "info",
+        "Carriage return characters are present; some tools may show these as ^M.",
+      ),
+    );
   }
   if (text && !/[\n\r]$/.test(text)) {
-    issues.push(issue("info", "File does not end with a newline; most parsers accept this, but partial exports may look similar."));
+    issues.push(
+      issue(
+        "info",
+        "File does not end with a newline; most parsers accept this, but partial exports may look similar.",
+      ),
+    );
   }
   if (text.endsWith("\n\n") || text.endsWith("\r\n\r\n")) {
     issues.push(issue("info", "Trailing blank line detected."));
   }
   if (!/[\n\r]/.test(text)) {
-    issues.push(issue("warning", "No line terminators detected; file may be a single row or malformed export."));
+    issues.push(
+      issue(
+        "warning",
+        "No line terminators detected; file may be a single row or malformed export.",
+      ),
+    );
   }
 
   return issues;
@@ -236,18 +282,36 @@ function detectNewlineIssues(text) {
 
 function chooseDelimiter(sample) {
   const candidates = [",", ";", "\t", "|"];
-  const counts = Object.fromEntries(candidates.map((candidate) => [candidate, sample.split(candidate).length - 1]));
-  const delimiter = candidates.reduce((best, candidate) => (counts[candidate] > counts[best] ? candidate : best), ",");
+  const counts = Object.fromEntries(
+    candidates.map((candidate) => [
+      candidate,
+      sample.split(candidate).length - 1,
+    ]),
+  );
+  const delimiter = candidates.reduce(
+    (best, candidate) => (counts[candidate] > counts[best] ? candidate : best),
+    ",",
+  );
   const issues = [];
 
   if (counts[delimiter] === 0) {
-    issues.push(issue("warning", "Could not confidently detect a delimiter; defaulting to comma."));
+    issues.push(
+      issue(
+        "warning",
+        "Could not confidently detect a delimiter; defaulting to comma.",
+      ),
+    );
     return [",", issues];
   }
 
   const nonZero = candidates.filter((candidate) => counts[candidate] > 0);
   if (nonZero.length > 1) {
-    issues.push(issue("info", `Multiple possible delimiters found in sample; parser is using the most frequent candidate (${JSON.stringify(delimiter)}).`));
+    issues.push(
+      issue(
+        "info",
+        `Multiple possible delimiters found in sample; parser is using the most frequent candidate (${JSON.stringify(delimiter)}).`,
+      ),
+    );
   }
 
   return [delimiter, issues];
@@ -255,9 +319,18 @@ function chooseDelimiter(sample) {
 
 function sniffQuoteBalance(text) {
   const issues = [];
-  const oddLines = text.split(/\r\n|\n|\r/).flatMap((line, index) => (line.split('"').length - 1) % 2 === 1 ? [index + 1] : []);
+  const oddLines = text
+    .split(/\r\n|\n|\r/)
+    .flatMap((line, index) =>
+      (line.split('"').length - 1) % 2 === 1 ? [index + 1] : [],
+    );
   if (oddLines.length) {
-    issues.push(issue("warning", `Lines with odd double-quote counts detected: ${oddLines.slice(0, 5).join(", ")}.`));
+    issues.push(
+      issue(
+        "warning",
+        `Lines with odd double-quote counts detected: ${oddLines.slice(0, 5).join(", ")}.`,
+      ),
+    );
   }
   return issues;
 }
@@ -334,11 +407,21 @@ function validateRows(rows) {
       issues.push(issue("warning", `Header column ${index + 1} is empty.`));
     }
     if (name !== name.trim()) {
-      issues.push(issue("warning", `Header column ${index + 1} has leading or trailing whitespace.`));
+      issues.push(
+        issue(
+          "warning",
+          `Header column ${index + 1} has leading or trailing whitespace.`,
+        ),
+      );
     }
     const lowered = name.trim().toLowerCase();
     if (lowered && seenHeaders.has(lowered)) {
-      issues.push(issue("warning", `Duplicate header name detected: ${JSON.stringify(name)}.`));
+      issues.push(
+        issue(
+          "warning",
+          `Duplicate header name detected: ${JSON.stringify(name)}.`,
+        ),
+      );
     }
     seenHeaders.add(lowered);
   });
@@ -346,31 +429,63 @@ function validateRows(rows) {
   rows.slice(1).forEach((row, rowIndex) => {
     const rowNumber = rowIndex + 2;
     if (row.length !== expectedColumns) {
-      issues.push(issue("error", `Row ${rowNumber} has ${row.length} columns; expected ${expectedColumns}.`));
+      issues.push(
+        issue(
+          "error",
+          `Row ${rowNumber} has ${row.length} columns; expected ${expectedColumns}.`,
+        ),
+      );
     }
 
     row.forEach((value, colIndex) => {
       const colNumber = colIndex + 1;
       if (value !== value.trim()) {
-        issues.push(issue("info", `Row ${rowNumber}, column ${colNumber} has leading or trailing whitespace.`));
+        issues.push(
+          issue(
+            "info",
+            `Row ${rowNumber}, column ${colNumber} has leading or trailing whitespace.`,
+          ),
+        );
       }
       if (CONTROL_CHAR_PATTERN.test(value)) {
-        issues.push(issue("warning", `Row ${rowNumber}, column ${colNumber} contains control characters.`));
+        issues.push(
+          issue(
+            "warning",
+            `Row ${rowNumber}, column ${colNumber} contains control characters.`,
+          ),
+        );
       }
       if (/^[=+\-@]/.test(value)) {
-        issues.push(issue("warning", `Row ${rowNumber}, column ${colNumber} may trigger spreadsheet formula interpretation.`));
+        issues.push(
+          issue(
+            "warning",
+            `Row ${rowNumber}, column ${colNumber} may trigger spreadsheet formula interpretation.`,
+          ),
+        );
       }
       if (/^\d+$/.test(value) && value.length > 1 && value.startsWith("0")) {
-        issues.push(issue("warning", `Row ${rowNumber}, column ${colNumber} has leading zeros that spreadsheet tools may strip.`));
+        issues.push(
+          issue(
+            "warning",
+            `Row ${rowNumber}, column ${colNumber} has leading zeros that spreadsheet tools may strip.`,
+          ),
+        );
       }
       if (/^\d+$/.test(value) && value.length >= 16) {
-        issues.push(issue("warning", `Row ${rowNumber}, column ${colNumber} is a long integer that may lose precision in spreadsheets.`));
+        issues.push(
+          issue(
+            "warning",
+            `Row ${rowNumber}, column ${colNumber} is a long integer that may lose precision in spreadsheets.`,
+          ),
+        );
       }
     });
   });
 
   if (rows.length === 1) {
-    issues.push(issue("warning", "Only one row detected; file may contain header only."));
+    issues.push(
+      issue("warning", "Only one row detected; file may contain header only."),
+    );
   }
 
   return issues;
@@ -379,30 +494,60 @@ function validateRows(rows) {
 function compareWithExpectedFormat(result, config) {
   const issues = [];
   if (result.delimiter !== config.delimiter) {
-    issues.push(issue("warning", `Detected delimiter ${JSON.stringify(result.delimiter)} does not match expected ${JSON.stringify(config.delimiter)}.`));
+    issues.push(
+      issue(
+        "warning",
+        `Detected delimiter ${JSON.stringify(result.delimiter)} does not match expected ${JSON.stringify(config.delimiter)}.`,
+      ),
+    );
   }
 
-  const expectedNewlineStyle = { "\n": "lf", "\r\n": "crlf", "\r": "cr" }[config.lineTerminator];
-  if (expectedNewlineStyle && !["mixed", "none", expectedNewlineStyle].includes(result.newlineStyle)) {
-    issues.push(issue("warning", `Detected newline style ${JSON.stringify(result.newlineStyle)} does not match expected ${JSON.stringify(expectedNewlineStyle)}.`));
+  const expectedNewlineStyle = { "\n": "lf", "\r\n": "crlf", "\r": "cr" }[
+    config.lineTerminator
+  ];
+  if (
+    expectedNewlineStyle &&
+    !["mixed", "none", expectedNewlineStyle].includes(result.newlineStyle)
+  ) {
+    issues.push(
+      issue(
+        "warning",
+        `Detected newline style ${JSON.stringify(result.newlineStyle)} does not match expected ${JSON.stringify(expectedNewlineStyle)}.`,
+      ),
+    );
   }
 
-  const expectedEncoding = config.bom && config.encoding === "utf-8" ? "utf-8-sig" : config.encoding;
+  const expectedEncoding =
+    config.bom && config.encoding === "utf-8" ? "utf-8-sig" : config.encoding;
   if (result.encoding !== expectedEncoding) {
-    issues.push(issue("warning", `Detected encoding ${JSON.stringify(result.encoding)} does not match expected ${JSON.stringify(expectedEncoding)}.`));
+    issues.push(
+      issue(
+        "warning",
+        `Detected encoding ${JSON.stringify(result.encoding)} does not match expected ${JSON.stringify(expectedEncoding)}.`,
+      ),
+    );
   }
 
   return issues;
 }
 
 function buildCsv(rows, config) {
-  return rows
-    .map((row) => row.map((value) => encodeCsvCell(value, config.delimiter, config.quoteStyle)).join(config.delimiter))
-    .join(config.lineTerminator) + (rows.length ? config.lineTerminator : "");
+  return (
+    rows
+      .map((row) =>
+        row
+          .map((value) =>
+            encodeCsvCell(value, config.delimiter, config.quoteStyle),
+          )
+          .join(config.delimiter),
+      )
+      .join(config.lineTerminator) + (rows.length ? config.lineTerminator : "")
+  );
 }
 
 function encodeCsvCell(value, delimiter, quoteStyle) {
-  const mustQuote = quoteStyle === "all" || value.includes(delimiter) || /["\n\r]/.test(value);
+  const mustQuote =
+    quoteStyle === "all" || value.includes(delimiter) || /["\n\r]/.test(value);
   const escapedValue = value.replaceAll('"', '""');
   return mustQuote ? `"${escapedValue}"` : escapedValue;
 }
@@ -415,7 +560,9 @@ function createDownloadBlob(correctedCsv, config) {
   }
 
   if (config.encoding === "latin-1") {
-    const bytes = new Uint8Array([...correctedCsv].map((char) => char.charCodeAt(0) & 0xff));
+    const bytes = new Uint8Array(
+      [...correctedCsv].map((char) => char.charCodeAt(0) & 0xff),
+    );
     return new Blob([bytes], { type: "text/csv;charset=iso-8859-1" });
   }
 
@@ -433,8 +580,11 @@ function renderAnalysis(analysis, config) {
   elements.rowCount.textContent = String(analysis.rows.length);
   elements.columnCount.textContent = String(analysis.rows[0]?.length ?? 0);
   elements.issueCount.textContent = String(analysis.issues.length);
-  elements.outputPreview.textContent = state.correctedCsv || "No corrected output generated.";
-  elements.downloadButton.disabled = analysis.issues.some((current) => current.severity === "error");
+  elements.outputPreview.textContent =
+    state.correctedCsv || "No corrected output generated.";
+  elements.downloadButton.disabled = analysis.issues.some(
+    (current) => current.severity === "error",
+  );
   renderIssues(analysis.issues);
 }
 
@@ -469,7 +619,8 @@ function renderEmptyIssues() {
 
 function renderFatalIssue(message) {
   elements.detectedFormat.textContent = "Analysis failed";
-  elements.targetFormat.textContent = "Fix the form settings and rerun analysis";
+  elements.targetFormat.textContent =
+    "Fix the form settings and rerun analysis";
   elements.rowCount.textContent = "0";
   elements.columnCount.textContent = "0";
   elements.issueCount.textContent = "1";

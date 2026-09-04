@@ -1,3 +1,9 @@
+//! CSV Rust workflow entry.
+//!
+//! Purpose: demonstrate CSV loading and dumping with the Rust library.
+//! Usage: run `cargo run`; see `main.md` for details.
+//! Substeps: create rows, write CSV data, reload it, and verify the result.
+
 use rust_csv::{dump_csv, load_csv};
 
 fn main() {

@@ -1,3 +1,9 @@
+//! CSV Rust workflow library.
+//!
+//! Purpose: load and dump CSV rows through the `main.rs` workflow entry.
+//! Usage: run `cargo run`; see `main.md` for details.
+//! Substeps: parse CSV records, validate quoting, and write escaped records.
+
 use std::collections::HashSet;
 use std::fs;
 use std::io;

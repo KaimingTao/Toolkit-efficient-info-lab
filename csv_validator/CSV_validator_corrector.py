@@ -1,4 +1,11 @@
-#!/usr/bin/env python3
+"""CSV validator and corrector workflow.
+
+Purpose: validate CSV compatibility and optionally write a corrected file.
+Usage: python CSV_validator_corrector.py <input.csv>; see
+CSV_validator_corrector.md for full options and examples.
+Substeps: detect encoding and formatting issues, validate rows, compare the
+target format, then report or write corrected output.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +15,6 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
 
 try:
     import yaml
@@ -36,16 +42,16 @@ class OutputFormatConfig:
 
 @dataclass
 class ValidationResult:
-    issues: List[Issue]
+    issues: list[Issue]
     delimiter: str
-    rows: List[List[str]]
+    rows: list[list[str]]
     encoding: str
     newline_style: str
 
 
-def detect_encoding(raw: bytes) -> tuple[str, List[Issue]]:
-    issues: List[Issue] = []
-    if raw.startswith(b"\xff\xfe") or raw.startswith(b"\xfe\xff"):
+def detect_encoding(raw: bytes) -> tuple[str, list[Issue]]:
+    issues: list[Issue] = []
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
         issues.append(
             Issue("warning", "UTF-16 BOM detected; some CSV tools expect UTF-8.")
         )
@@ -68,8 +74,8 @@ def detect_encoding(raw: bytes) -> tuple[str, List[Issue]]:
         return "latin-1", issues
 
 
-def detect_newline_issues(raw: bytes) -> List[Issue]:
-    issues: List[Issue] = []
+def detect_newline_issues(raw: bytes) -> list[Issue]:
+    issues: list[Issue] = []
     has_crlf = b"\r\n" in raw
     has_lf = b"\n" in raw
     has_cr = b"\r" in raw
@@ -102,7 +108,7 @@ def detect_newline_issues(raw: bytes) -> List[Issue]:
             )
         )
 
-    if raw.endswith(b"\n\n") or raw.endswith(b"\r\n\r\n"):
+    if raw.endswith((b"\n\n", b"\r\n\r\n")):
         issues.append(Issue("info", "Trailing blank line detected."))
 
     if not has_lf and not has_cr:
@@ -136,8 +142,8 @@ def detect_newline_style(raw: bytes) -> str:
     return "none"
 
 
-def choose_delimiter(sample: str) -> tuple[str, List[Issue]]:
-    issues: List[Issue] = []
+def choose_delimiter(sample: str) -> tuple[str, list[Issue]]:
+    issues: list[Issue] = []
     candidates = [",", ";", "\t", "|"]
     counts = {candidate: sample.count(candidate) for candidate in candidates}
     best = max(counts, key=counts.get)
@@ -157,14 +163,14 @@ def choose_delimiter(sample: str) -> tuple[str, List[Issue]]:
             Issue(
                 "info",
                 "Multiple possible delimiters found in sample; parser is using the most frequent candidate "
-                f"({repr(best)}).",
+                f"({best!r}).",
             )
         )
     return best, issues
 
 
-def sniff_quote_balance(text: str) -> List[Issue]:
-    issues: List[Issue] = []
+def sniff_quote_balance(text: str) -> list[Issue]:
+    issues: list[Issue] = []
     odd_quote_lines = []
     for idx, line in enumerate(text.splitlines(), start=1):
         if line.count('"') % 2 == 1:
@@ -177,15 +183,15 @@ def sniff_quote_balance(text: str) -> List[Issue]:
     return issues
 
 
-def parse_rows(text: str, delimiter: str) -> tuple[List[List[str]], List[Issue]]:
+def parse_rows(text: str, delimiter: str) -> tuple[list[list[str]], list[Issue]]:
     try:
         return list(csv.reader(text.splitlines(), delimiter=delimiter)), []
     except csv.Error as exc:
         return [], [Issue("error", f"CSV parser error: {exc}")]
 
 
-def validate_rows(rows: List[List[str]]) -> List[Issue]:
-    issues: List[Issue] = []
+def validate_rows(rows: list[list[str]]) -> list[Issue]:
+    issues: list[Issue] = []
 
     if not rows:
         return [Issue("error", "File is empty.")]
@@ -273,8 +279,8 @@ def validate_rows(rows: List[List[str]]) -> List[Issue]:
 
 def compare_with_expected_format(
     result: ValidationResult, config: OutputFormatConfig
-) -> List[Issue]:
-    issues: List[Issue] = []
+) -> list[Issue]:
+    issues: list[Issue] = []
 
     if result.delimiter != config.delimiter:
         issues.append(
@@ -367,7 +373,7 @@ def load_config(path: Path) -> OutputFormatConfig:
 
 
 def write_corrected_csv(
-    rows: List[List[str]], output_path: Path, config: OutputFormatConfig
+    rows: list[list[str]], output_path: Path, config: OutputFormatConfig
 ) -> None:
     quoting = csv.QUOTE_ALL if config.quote_style == "all" else csv.QUOTE_MINIMAL
     output_encoding = (
@@ -385,12 +391,12 @@ def write_corrected_csv(
 
 def print_report(
     path: Path,
-    issues: List[Issue],
+    issues: list[Issue],
     delimiter: str,
     config: OutputFormatConfig | None = None,
 ) -> int:
     print(f"File: {path}")
-    print(f"Detected delimiter: {repr(delimiter)}")
+    print(f"Detected delimiter: {delimiter!r}")
     if config is not None:
         print(
             "Expected output format: "

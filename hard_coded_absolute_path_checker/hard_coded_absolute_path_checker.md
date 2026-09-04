@@ -31,3 +31,8 @@ missing or is not a directory.
    literals for POSIX or Windows absolute paths.
 4. Print all violations and return exit code `1`; print a success message and
    return exit code `0` when none are found.
+
+## Dependencies
+
+This step uses only the Python standard library and inherits the parent
+project's Python version requirement from `pyproject.toml`.

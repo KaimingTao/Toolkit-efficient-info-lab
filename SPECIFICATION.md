@@ -3,10 +3,10 @@
 A **step** is an independently runnable script, command, or subproject task.
 Each step must contain these four parts.
 
-1. **Main workflow entry.** Provide one clearly identified executable entry
-   point: for example, a script, CLI command, application page, or `main`
-   function. The workflow document must name this entry and the command used
-   to run it.
+1. **Main workflow entry (optional).** A workflow may provide one clearly
+   identified executable entry point: for example, a script, CLI command,
+   application page, or `main` function. When present, the workflow document
+   must name this entry and the command used to run it.
 2. **Workflow document.** Provide a Markdown document beside the entry point
    with the same base name as the entry file. For example, `load_csv.py` must
    use `load_csv.md`; `main.rs` must use `main.md`. It must state:
