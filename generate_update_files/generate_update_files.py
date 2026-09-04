@@ -7,7 +7,7 @@ updated_at_YYYY-MM-DD.md files. See generate_update_files.md for details.
 """
 
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
 SOURCE_SUFFIXES = {".py", ".rs", ".js", ".html"}
@@ -56,7 +56,7 @@ def main() -> None:
     for folder in sorted(step_folders(repository_root)):
         relative_folder = folder.relative_to(repository_root)
         update_date = (
-            datetime.now(UTC).date().isoformat()
+            datetime.now().astimezone().date().isoformat()
             if any(path.is_relative_to(relative_folder) for path in staged)
             else latest_update_date(repository_root, folder)
         )

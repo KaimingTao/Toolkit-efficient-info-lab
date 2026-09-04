@@ -4,4 +4,4 @@
 
 set -eu
 uv run python generate_update_files/generate_update_files.py
-git add -- */updated_at_*.md
+git add -A -- ':(glob)**/updated_at_*.md'
