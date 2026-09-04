@@ -1,0 +1,7 @@
+#!/bin/sh
+# Update-marker hook. Runs the documented generator, then stages its generated
+# markers so each changed workflow records the commit date.
+
+set -eu
+uv run python generate_update_files/generate_update_files.py
+git add -- */updated_at_*.md
