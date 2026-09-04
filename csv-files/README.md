@@ -48,5 +48,5 @@ uv run ruff check . --fix
 Check Python source code for hard-coded absolute paths:
 
 ```sh
-uv run python scripts/check_absolute_paths.py
+uv run python hard_coded_absolute_path_checker/hard_coded_absolute_path_checker.py <folder-path>
 ```

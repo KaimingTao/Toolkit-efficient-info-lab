@@ -24,9 +24,10 @@ Each step must contain these four parts.
    changes.
 4. **Dedicated workflow folder and tests.** Place every workflow step in its
    own folder. That folder must contain the entry file, its same-named workflow
-   document, the implementation files, test code, and test cases (fixtures or
-   sample inputs and their expected outputs). Keep tests and test cases within
-   the workflow folder rather than in a shared unrelated location.
+   document, and the implementation files. Test code and test cases (fixtures
+   or sample inputs and their expected outputs) are optional; when present,
+   keep them within the workflow folder rather than in a shared unrelated
+   location.
 
 ## Formatting and linting
 
@@ -34,3 +35,9 @@ Every programming-language source file must be formatted and linted with the
 project's language-appropriate tools before it is committed. For example, use
 Ruff for Python, `cargo fmt` and Clippy for Rust, and the configured formatter
 and linter for JavaScript or other languages.
+
+## Dependencies
+
+Dependencies must be clearly documented in the workflow step's same-named
+workflow document. When a step does not declare its own dependencies, it uses
+the dependencies declared by its parent step.

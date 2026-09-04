@@ -1,11 +1,19 @@
-"""Report hard-coded absolute path literals in Python source code."""
+"""Hard-Coded Absolute Path Checker workflow.
 
+Purpose: report hard-coded absolute path literals in Python files below a
+specified folder. Usage: uv run python
+hard_coded_absolute_path_checker/hard_coded_absolute_path_checker.py <folder-path>
+Substeps: validate the folder, discover Python files, inspect string literals
+with the AST, then report violations and exit nonzero when any are found. See
+hard_coded_absolute_path_checker.md for the complete workflow document.
+"""
+
+import argparse
 import ast
 import re
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SKIPPED_DIRECTORIES = {".git", ".venv", "__pycache__"}
 WINDOWS_ABSOLUTE_PATH = re.compile(r"^[A-Za-z]:[\\/]")
 
@@ -35,10 +43,23 @@ def find_absolute_path_literals(path: Path) -> list[ast.Constant]:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Report hard-coded absolute path literals in Python source files."
+    )
+    parser.add_argument(
+        "folder_path",
+        type=Path,
+        help="Folder containing Python files to check.",
+    )
+    arguments = parser.parse_args()
+    folder_path = arguments.folder_path.expanduser().resolve()
+    if not folder_path.is_dir():
+        parser.error(f"folder path is not a directory: {folder_path}")
+
     violations = []
-    for path in python_files(PROJECT_ROOT):
+    for path in python_files(folder_path):
         for node in find_absolute_path_literals(path):
-            relative_path = path.relative_to(PROJECT_ROOT)
+            relative_path = path.relative_to(folder_path)
             violations.append(
                 f"{relative_path}:{node.lineno}:{node.col_offset + 1}: "
                 f"absolute path literal {node.value!r}"
